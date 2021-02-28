@@ -1,42 +1,68 @@
 \documentclass{article}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Page stuff
 \usepackage{geometry}
-\geometry{
-    a4paper,
-    total={170mm,257mm},
-    left=20mm,
-    top=20mm,
-    }
+% \geometry{
+%     a4paper,
+%     total={170mm,257mm},
+%     left=20mm,
+%     top=20mm,
+%     }
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{graphicx}
-\graphicspath{{images/}}
 
 % Best loaded last in the preamble
 \usepackage{subfiles} 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-\title{Subfile Example}
-\author{Team Learn Overleaf}
-\date{ }
 
 \begin{document}
 
-\maketitle
+%%% COVER PAGE %%%
+\subfile{sections/cover_page_report}
+\pagenumbering{roman}
+
+%%% ACKNOWLEDGEMENTS %%%
+\subfile{sections/acknowledgements}
+\addcontentsline{toc}{section}{\numberline{}Acknowledgements}
+\cleardoublepage
+
+%%% DECLARATION OF HONOR %%%
+\subfile{sections/honor_declaration}
+\addcontentsline{toc}{section}{\numberline{}Declaration of Honor}
+\cleardoublepage
+
+%%% TABLE OF CONTENTS %%%
+\tableofcontents
+\thispagestyle{empty}
+\cleardoublepage
+
+%%% LIST OF FIGURES AND TABLES %%%
+\listoffigures
+\addcontentsline{toc}{section}{\numberline{}List of Figures}
+\cleardoublepage
+
+%%% STATE OF THE ART %%%
+\subfile{sections/sota}
+\cleardoublepage
+
+%%% ABSTRACT %%%
+\section{Abstract}
+\pagenumbering{arabic}
+\cleardoublepage
 
 %%% INTRODUCTION %%%
 \section{Introduction}
 \subfile{sections/introduction}
-un antes y un despuesee
 
-%%% ABSTRACT %%%
-\section{Abstract}
+% more things here!!!
 
-%%% STATE OF THE ART %%%
-\section{State of the Art}
-\subfile{sections/sota}
+%%% FUTURE WORK %%%
+\subfile{sections/future_work}
+
+%%% CONCLUSION %%%
+\subfile{sections/conclusions}
 
 \end{document}

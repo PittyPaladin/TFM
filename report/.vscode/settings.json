@@ -1,3 +1,6 @@
 {
-    "editor.wordWrap": "on"
+    "latex-workshop.latex.autoClean.run": "onBuilt",
+    "editor.wordWrap": "on",
+    "latex-workshop.view.pdf.backgroundColor": "#808080",
+    "latex-workshop.latex.rootFile.useSubFile": false
 }
