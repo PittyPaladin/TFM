@@ -1,0 +1,42 @@
+\documentclass{article}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Page stuff
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+    }
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+% Best loaded last in the preamble
+\usepackage{subfiles} 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\title{Subfile Example}
+\author{Team Learn Overleaf}
+\date{ }
+
+\begin{document}
+
+\maketitle
+
+%%% INTRODUCTION %%%
+\section{Introduction}
+\subfile{sections/introduction}
+un antes y un despuesee
+
+%%% ABSTRACT %%%
+\section{Abstract}
+
+%%% STATE OF THE ART %%%
+\section{State of the Art}
+\subfile{sections/sota}
+
+\end{document}
