@@ -1,0 +1,70 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{./images/}}
+
+\begin{document}
+
+\section{Methodology and tooling} \label{sec:methodology_and_tooling}
+Here goes methodology and tooling intro.
+
+\subsection{Assumptions}
+Asunciones básicas que se toman en este proyecto.
+\begin{enumerate}
+    \item No assumptions can be done about the camera's position and movement. The camera may be still facing the testbench or slightly moving.
+    \item There will always be some light shed on the testbench, but its intensity may vary.
+\end{enumerate}
+
+\subsection{The testbench}
+Explicar con texto qué testbench se va a usar, porqué se ha escogido ese, lo que motiva la disposición de los elementos y, sobretodo, fotos.
+
+\subsection{Data acquisition}
+Decir primero que la cámara a usar será 3D porque así tienes nubes de puntos e imágenes 3D de una.
+Hablar de los tipos de cámaras que hay y en qué tecnologías se basan. Presentar comparativa de todas ellas y decir cuál se escoje. Hablar del driver que usa para adquirir imágenes. Luego hablar de cómo se guardan los point clouds, su formato PCD, y porqué de dónde viene este formato. Lo mismo con los diferentes formatos de imagen (que sea breve).
+
+
+
+\subsection{Frameworks and languages}
+This section is designed to introduce the languages and frameworks that will be used all throughout the project and provide some reasoning on why they are used, as well as to provide some background in the array of options out there and why ones are chosen above others. Since most of the concepts of this work are yet to be introduced in the upcoming sections I will try to gently introduce and reference the frameworks this section will describe as they go.
+
+This work is based on a dual approach to the concept of computer vision\footnote{Taking the meaning of \emph{computer vision} in the broadest sense possible, that is, making machines sense the environment, irrespective of how the environment is recorded.}: 2D digital image processing (in the form of bitmaps) and 3D point cloud processing. Hence, it makes sense to assess the capabilities of the most important libraries that tackle those tasks.
+
+\paragraph{Most prominent 2D image processing libraries} 
+There are many image processing libraries. However, only the most notable ones are listed here. The newest machine/deep learning libraries, although used extensively for computer vision-related tasks, are not included in this list but rather given a dedicated chapter later on.
+\begin{itemize}
+    \item OpenCV: the Open Source Computer Vision library was started in 1999 by an Intel Research member called Gary Bradski, with the aim of making computer vision universally available. Its developing team has changed with time, but receives periodic improvements from the computer vision community. So much so that it incorporates some Deep Learning algorithms. OpenCV was built from the start with optimization and real-time applications in mind, making its algorithms as fast they can go. On top of that, it uses hardware acceleration\footnote{Like SIMD instruction sets.} when it can. Its interfaces are C++ (the language in which it is written), Python, Java and MATLAB, which is very useful when incorporating OpenCV into existing code bases not necessarily written in C++. The fact that the interface supports higher-level languages like Python (via Python bindings created using the Python/C API\footnote{\url{https://docs.python.org/3/c-api/index.html}}) makes writing programs fast and enhances productivity by being able to use widely popular packages like Numpy, Matplotlib, and others.
+    
+    OpenCV is the go-to library for image processing (so much so that, at the time of writing, their webpage states 18 million downloads), so the newest algorithms in the literature tend to be implemented first there, either by the same author or people who understood them. This and the fact that it is a 20+ year old library makes it incredibly robust and proof tested.
+
+    The library comes with an Apache 2 license, making it free to distribute, modify and use even for commercial applications (arguably this is one of the driving forces behind its popularity). Patented algorithms implemented in OpenCV, however, are not actually free to use and may require royalties or some kind of fees to the patent holders (like the SIFT algorithm, explained in this project).
+
+    \item Scipy: the Scipy package \cite{scipy_paper} was published in 2001 with the purpose of being a whole ecosystem of open-source tools for mathematics, science and engineering. It being an ecosystem provides a core library on top of supporting other packages like SymPy, NumPy, Matplotlib, and others. In particular, Scipy's core module \texttt{ndimage} supports several image processing related tasks. It has been superseded by Scikit-image.
+    \item Scikit-image: the package scikit-image \cite{skimage_paper} is an open source image processing library that derived from Scipy, with the intention to focus on image processing related tasks. It was first released in 2009 and has since undergone a long way of continuous improvements from the community. It does not come with as wide an array of solutions as OpenCV does, but instead provides (1) high quality open and free pythonic code that has been peer reviewed prior to its inclusion in the package; (2) a focus on education; (3) a sufficient range of state of the art algorithms; and (4) efficient code that runs reasonably fast (some sections of the code are written in Cython or use Numba) and uses the de facto standards of Python in the science realm (that is, NumPy and Matplotlib).
+\end{itemize}
+
+\paragraph{3D point cloud processing libraries}
+There are fewer options regarding the processing of point clouds. OpenCV, although known for its 2D image processing capabilities, has some 3D processing features. But the go-to library is actually the Point Cloud Library (PCL) \cite{pcl_paper}, launched in 2011. Just like OpenCV, it is implemented in C++ with efficiency and speed in mind\footnote{SIMD instruction set for CPU computing and CUDA for GPU computing.}, and includes almost all the latest and greatest algorithms from the literature, either implemented by their own authors or others persons in the community. Despite its popularity, it does not provide an interface other than the C++ API in which it was coded.
+
+The framework of choice for the 2D approach (Section \ref{sec:2D_approach}) is OpenCV, used with the Python bindings. Combining the completeness and robustness of OpenCV with the boost in productivity Python itself as a language offers (compared to C++) and the array of packages that can be used alongside is key to this work. The framework of choice for the 3D approach (Section \ref{sec:3D_approach}) is PCL, again, for its completeness and robustness. Sadly, there are no official Python bindings, which means that all work will need to be carried out with its C++ API and no interaction with the Python interpreter is possible (unless I built custom bindings, which is not feasible due to time constraints). Code from the 3D approach should be self contained, and any interaction using Python would need to be done by firstly writing the data to disk and then reading it again from the other end (from the Python's end that is).
+
+\paragraph{Deep learning frameworks}
+Section \ref{sec:world_neural_networks} of this work explores the use of Deep Learning for approaching the object detection issue. Hence, it is pertinent to provide a full comparison of the competitive deep learning frameworks available. It has to be noted that deep learning is a type of approach that works for both 2D images and 3D point cloud data.
+
+\begin{itemize}
+    \item TensorFlow:
+    \item PyTorch:
+    \item MXnet:
+\end{itemize}
+
+\paragraph{Essential libraries} 
+Python is one of the most popular \cite{TODO:citeTIOBEindex} languages for two main reasons: first, the fact that it is a dynamic\footnote{Meaning it executes in runtime tasks that other languages would do in compile time.} high level language that allows for high productivity; and second because of its ecosystem. Ecosystem meaning the set of quality libraries that surround the language itself and make it ideal for a wide array of tasks. Those libraries are contributed freely by the community, and have become so ubiquitous that are almost considered \emph{de facto} standards, particularly in the scientific computing area. The ones used for this project are listed below:
+\begin{enumerate}
+    \item NumPy:
+    \item Matplotlib:
+    \item Numba: TODO:mencionar la sección exacta en la que se usa!
+\end{enumerate}
+
+And last but certainly not least, the Python Standard Library, which, as the name suggests, comes with the Python distribution. It offers a wide range of facilities to everyday hassles programmers may encounter, and does so in an OS-independent API manner. Such facilities include I/O functionality, networking, parsing, database management, email handling, and a long etcetera. Full list is provided in the official documentation\footnote{\url{https://docs.python.org/3/library/}}.
+
+% Y LUEGO DE LAS LIBRERÍAS ESENCIALES QUE VAN INCLUIDAS DE FACTO EN EL PROYECTO: NUMPY, MATPLOTLIB, Y EVIDENTEMENTE UN USO INTELIGENTE DE LA LIBRERIA ESTANDAR DE PYTHON
+
+ 
+\end{document}

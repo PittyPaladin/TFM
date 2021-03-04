@@ -3,12 +3,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Page stuff
 \usepackage{geometry}
-% \geometry{
-%     a4paper,
-%     total={170mm,257mm},
-%     left=20mm,
-%     top=20mm,
-%     }
+\usepackage{xcolor}
+\usepackage{hyperref}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{graphicx}
@@ -46,23 +42,39 @@
 
 %%% STATE OF THE ART %%%
 \subfile{sections/sota}
+\addcontentsline{toc}{section}{\numberline{}State of the art}
 \cleardoublepage
 
 %%% ABSTRACT %%%
-\section{Abstract}
-\pagenumbering{arabic}
+\subfile{sections/abstract}
+\addcontentsline{toc}{section}{\numberline{}Abstract}
 \cleardoublepage
+\pagenumbering{arabic}
 
 %%% INTRODUCTION %%%
-\section{Introduction}
 \subfile{sections/introduction}
 
-% more things here!!!
+%%% METHODOLOGY and TOOLS %%%
+\subfile{sections/methodology_and_tooling}
+
+%%% 2D APPROACH %%%
+\subfile{sections/2D_approach}
+
+%%% 3D APPROACH %%%
+\subfile{sections/3D_approach}
+
+%%% 2D and 3D SOLUTIONS %%%
+\subfile{sections/2D_and_3D_solutions}
 
 %%% FUTURE WORK %%%
 \subfile{sections/future_work}
 
 %%% CONCLUSION %%%
 \subfile{sections/conclusions}
+
+%%% BIBLIOGRAPHY %%%
+\bibliographystyle{ieeetr}
+\bibliography{bibliography/biblio_TFM.bib}
+\addcontentsline{toc}{section}{\numberline{}References}
 
 \end{document}
