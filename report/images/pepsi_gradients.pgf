@@ -1,0 +1,108 @@
+%% Creator: Matplotlib, PGF backend
+%%
+%% To include the figure in your LaTeX document, write
+%%   \input{<filename>.pgf}
+%%
+%% Make sure the required packages are loaded in your preamble
+%%   \usepackage{pgf}
+%%
+%% and, on pdftex
+%%   \usepackage[utf8]{inputenc}\DeclareUnicodeCharacter{2212}{-}
+%%
+%% or, on luatex and xetex
+%%   \usepackage{unicode-math}
+%%
+%% Figures using additional raster images can only be included by \input if
+%% they are in the same directory as the main LaTeX file. For loading figures
+%% from other directories you can use the `import` package
+%%   \usepackage{import}
+%%
+%% and then include the figures with
+%%   \import{<path to file>}{<filename>.pgf}
+%%
+%% Matplotlib used the following preamble
+%%   \usepackage{fontspec}
+%%
+\begingroup%
+\makeatletter%
+\begin{pgfpicture}%
+\pgfpathrectangle{\pgfpointorigin}{\pgfqpoint{12.000000in}{5.000000in}}%
+\pgfusepath{use as bounding box, clip}%
+\begin{pgfscope}%
+\pgfsetbuttcap%
+\pgfsetmiterjoin%
+\pgfsetlinewidth{0.000000pt}%
+\definecolor{currentstroke}{rgb}{1.000000,1.000000,1.000000}%
+\pgfsetstrokecolor{currentstroke}%
+\pgfsetstrokeopacity{0.000000}%
+\pgfsetdash{}{0pt}%
+\pgfpathmoveto{\pgfqpoint{0.000000in}{0.000000in}}%
+\pgfpathlineto{\pgfqpoint{12.000000in}{0.000000in}}%
+\pgfpathlineto{\pgfqpoint{12.000000in}{5.000000in}}%
+\pgfpathlineto{\pgfqpoint{0.000000in}{5.000000in}}%
+\pgfpathclose%
+\pgfusepath{}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\pgfpathrectangle{\pgfqpoint{0.150000in}{0.280000in}}{\pgfqpoint{2.220000in}{4.440000in}}%
+\pgfusepath{clip}%
+\pgfsys@transformshift{0.150000in}{0.280000in}%
+\pgftext[left,bottom]{\includegraphics[interpolate=true,width=2.222222in,height=4.444444in]{pepsi_gradients-img0.png}}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
+\pgfsetstrokecolor{textcolor}%
+\pgfsetfillcolor{textcolor}%
+\pgftext[x=1.260000in,y=4.803333in,,base]{\color{textcolor}\rmfamily\fontsize{12.000000}{14.400000}\selectfont Original image}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\pgfpathrectangle{\pgfqpoint{2.520000in}{0.280000in}}{\pgfqpoint{2.220000in}{4.440000in}}%
+\pgfusepath{clip}%
+\pgfsys@transformshift{2.520000in}{0.280000in}%
+\pgftext[left,bottom]{\includegraphics[interpolate=true,width=2.222222in,height=4.444444in]{pepsi_gradients-img1.png}}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
+\pgfsetstrokecolor{textcolor}%
+\pgfsetfillcolor{textcolor}%
+\pgftext[x=3.630000in,y=4.803333in,,base]{\color{textcolor}\rmfamily\fontsize{12.000000}{14.400000}\selectfont Gradient in the \(\displaystyle x\) direction}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\pgfpathrectangle{\pgfqpoint{4.890000in}{0.280000in}}{\pgfqpoint{2.220000in}{4.440000in}}%
+\pgfusepath{clip}%
+\pgfsys@transformshift{4.890000in}{0.280000in}%
+\pgftext[left,bottom]{\includegraphics[interpolate=true,width=2.222222in,height=4.444444in]{pepsi_gradients-img2.png}}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
+\pgfsetstrokecolor{textcolor}%
+\pgfsetfillcolor{textcolor}%
+\pgftext[x=6.000000in,y=4.803333in,,base]{\color{textcolor}\rmfamily\fontsize{12.000000}{14.400000}\selectfont Gradient in the \(\displaystyle y\) direction}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\pgfpathrectangle{\pgfqpoint{7.260000in}{0.280000in}}{\pgfqpoint{2.220000in}{4.440000in}}%
+\pgfusepath{clip}%
+\pgfsys@transformshift{7.260000in}{0.280000in}%
+\pgftext[left,bottom]{\includegraphics[interpolate=true,width=2.222222in,height=4.444444in]{pepsi_gradients-img3.png}}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
+\pgfsetstrokecolor{textcolor}%
+\pgfsetfillcolor{textcolor}%
+\pgftext[x=8.370000in,y=4.803333in,,base]{\color{textcolor}\rmfamily\fontsize{12.000000}{14.400000}\selectfont Gradient magnitude}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\pgfpathrectangle{\pgfqpoint{9.630000in}{0.280000in}}{\pgfqpoint{2.220000in}{4.440000in}}%
+\pgfusepath{clip}%
+\pgfsys@transformshift{9.630000in}{0.280000in}%
+\pgftext[left,bottom]{\includegraphics[interpolate=true,width=2.222222in,height=4.444444in]{pepsi_gradients-img4.png}}%
+\end{pgfscope}%
+\begin{pgfscope}%
+\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
+\pgfsetstrokecolor{textcolor}%
+\pgfsetfillcolor{textcolor}%
+\pgftext[x=10.740000in,y=4.803333in,,base]{\color{textcolor}\rmfamily\fontsize{12.000000}{14.400000}\selectfont Gradient angle}%
+\end{pgfscope}%
+\end{pgfpicture}%
+\makeatother%
+\endgroup%

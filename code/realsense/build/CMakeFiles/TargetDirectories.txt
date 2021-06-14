@@ -1,0 +1,3 @@
+/home/david/TFM/code/realsense/build/CMakeFiles/rebuild_cache.dir
+/home/david/TFM/code/realsense/build/CMakeFiles/edit_cache.dir
+/home/david/TFM/code/realsense/build/CMakeFiles/pcd_streamer.dir

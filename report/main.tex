@@ -2,12 +2,24 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Page stuff
+\usepackage[utf8]{inputenc}\DeclareUnicodeCharacter{2212}{-}
 \usepackage{geometry}
 \usepackage{xcolor}
+\usepackage{import}
 \usepackage{hyperref}
-\usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{scrextend}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage[toc,page]{appendix}
+
+% amsmath custom-defined operators
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator{\Tr}{Tr}
+
 
 % Best loaded last in the preamble
 \usepackage{subfiles} 
@@ -66,15 +78,19 @@
 %%% 2D and 3D SOLUTIONS %%%
 \subfile{sections/2D_and_3D_solutions}
 
-%%% FUTURE WORK %%%
-\subfile{sections/future_work}
-
 %%% CONCLUSION %%%
 \subfile{sections/conclusions}
+\cleardoublepage
 
 %%% BIBLIOGRAPHY %%%
 \bibliographystyle{ieeetr}
 \bibliography{bibliography/biblio_TFM.bib}
 \addcontentsline{toc}{section}{\numberline{}References}
+\cleardoublepage
+
+%%% APPENDIX %%%
+\begin{appendices}
+\subfile{sections/appendix.tex}
+\end{appendices}
 
 \end{document}
