@@ -6,7 +6,11 @@
 
 
 \section{3D approach to object detection} \label{sec:3D_approach}
-3D approach introduction goes here.
+Section \ref{sec:3D_approach} was devoted to an approach by 2D RGB images only. This section will make use of Intel RealSense's ability to create 3D point clouds, which will then be used as input to other methods with the aim of detecting and recognizing the testbench's objects. As it will be observed, none of the methods provided tackles this issue, but introduces the ability of segmentating the cloud in pieces that could be used in combination with other methods, as presented later in section \ref{sec:2D_3D_approaches}.
+
+In addition, the union of different partial clouds in composed and detailed scenes is studied, called registration. Despite not being directly related to object detection it is an ubiquitous problem in cloud processing, and is a must-have once objects are detected and classified and a detailed occupancy grid is required (to, for instance, plan motion through the space).
+
+It has to be noted that object detection has been attempted with local descriptors too, in the same way that it has been tried in the 2D approach. SHOT \cite{Salti2014SHOTUS} to be precise. It is not included in the work since results have been very bad and the `descriptor' approach has been discarded altogether.
 
 \subsection{Filtering}
 Filtering point cloud data is in some sense equivalent to the 2D curation of the dataset, with its particularities. In general, data coming from depth sensors of any kind tends to have noise in the measurements, specially for distances that match the working range of the cameras. Hence, it is very important to filter out said noise as much as possible to ease further processing an increment the chances of success. There are many filtering techniques, and PCL offers a lot of variety in this regard. For this work, however, only 2 basic filtering techniques have been applied, and work well enough for the project. The first technique is a \emph{conditional filter} and the second one, applied in chain after it, is the \emph{statistical filter}. This section will explain how they work from a theoretical point of view and provide samples from the testbench to compare the `before' and `after' applying them.
@@ -250,22 +254,175 @@ Is $\Tr \left(VDV^{\top}\right)$ maximal? It is, and that is demonstrated with t
 
 
 
-\paragraph{Registration on the testbench using PCL} In the previous paragraphs the theory behind the composition of point cloud scenes has been explained. This section now presents the registration of several partial scenes taken from the testbench. 
+\paragraph{Registration on the testbench using PCL} 
+In the previous paragraphs the theory behind the composition of point cloud scenes has been explained. This section now presents the registration of several partial scenes taken from the testbench. 
 
-PCL offers an entire API for registration, including variants of the baseline ICP, sampling methods, and data association methods. This thesis has used the simplest configuration, since it has been proven to suffice. That is: the standard Iterative Closest Point algorithm, uniform sampling and closest point association.
+PCL offers an entire API for registration, including variants of the baseline ICP, sampling methods, and data association methods. This thesis has used the simplest configuration, since it has been proven to suffice. That is: the standard Iterative Closest Point algorithm, uniform sampling and closest point association. Note that, when registering point clouds, the reference frame of the registered cloud is the same as the first cloud taken as target. 
+
+See figure \ref{fig:registered_testbench} for a registered testbench made up of 3 different clouds. Notice how the shadows behind the objects are smaller than in individual point clouds, since several viewpoints have been put together into one same scene. Hence, the shapes of all objects in the scene are more complete and better defined, provided the ICP worked properly. This improvement in definition of objects allows for better segmentation and, if applied, more details descriptors.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/registered_testbench.png}
+    \caption{Registered testbench. Notice the more details compared to having a single cloud.}
+    \label{fig:registered_testbench}
+\end{figure}
 
 
 
 \subsection{Sample Consensus (SAC) segmentation} \label{sec:sac_segmentation}
+PCL offers a wide variety of Sample Consensus methods, RANSAC being the most famous, to fit simple geometric models to point clouds. They offer segmentation capabilities by extracting all points falling inside a threshold of the fit geometry. Depending on the application fitting models to point cloud data may allow to extract objects of interest, or at least preprocess the scene so that a posterior method as an easier job doing it. For this thesis, and given the characteristics of the testbench, SAC segmentation has been used to preprocess point cloud data by extracting undesired planar elements like table and walls, and not to extract objects of interest themselves. Fitting cylinders to isolate the Pepsi and Coca-Cola cans has been tested, unsuccessfully. Despite setting tight radii ranges cylinder models would always fall for outliers that could provide a better fit than the points that make up the cans.
+
+Hence, from all the types of models PCL offers (torus, disk, etc) only the plane has been used. PCL also offers many implementations of SAC methods, but the one used is RANSAC, theoretically explained in the Appendix \ref{sec:ransac}.
+
+Despite being something doable in PCL, the geometric models fit to the points are not constrained to certain poses or angles, since those would depend on the camera's viewport with respect to the testbench, and hence violate one of the assumptions.
 
 \subsection{Euclidean Cluster segmentation} \label{sec:euclidean_segmentation}
+As the name of the method suggests the Euclidean cluster segmentation method dives the point cloud into small chunks sufficiently separated from each other according to the Euclidean distance metric. To simplify the computation the point cloud is transformed into an octree \cite{octree_techrepo} data structure, which is a 3D grid subdivision of the space that uses fixed-width boxes. Making use of this type of data structure will increase speed, specially given that the algorithm is essentially a flood fill. The steps of the algorithm are detailed in \ref{lst:euclidean_cluster}.
+
+\begin{algorithm}[h]
+    \SetAlgoLined
+    Set: $d_{T}$ // user parameter\\
+    Define: $\{P\}$ // set of points in the cloud \\
+    $\{P\}$ := create\_octree($\{P\}$) \\
+    $\{C\}$ := \{ \} // empty set of clusters \\
+    $\{Q\}$ := \{ \} // queue of points to check \\
+    \For(){$i$ in $\{P\}$}{
+        get $P_{i}^{k}$ neighbors of $p_{i}$ inside a sphere $r < d_{T}$ \\
+        \For(){$j$ in $P_{i}^{k}$}{
+            // for all neighbors do \\
+            \If{$p_{j}^{k}$ not in $\{C\}$}{
+                $\{Q\}$ := $\{Q\}$ + $p_{j}^{k}$\\
+            }
+        }
+        $\{C\}$ := $\{C\}$ + $\{Q\}$ // add queue to the list of clusters \\
+        $\{Q\}$ := \{ \} // empty queue \\
+    }        
+    return $\{C\}$\\
+    \caption{The Euclidean Cluster algorithm}
+    \label{lst:euclidean_cluster}
+\end{algorithm}
+
+\subsubsection{Applied on the testbench}
+The euclidean cluster algorithm is ideal when the expected input cloud comes from sparse and clearly separable objects. This is, however, not the case with the testbench, since all objects lay on top of the table and are connected by it. To alleviate this RANSAC segmentation has been applied as a preprocessing step before feeding the cloud to the Euclidean cluster segmentation algorithm. Specifically, planes have been fit to the input cloud with the aim of removing the points falling inside said plane, with the aim of removing the table (and perhaps the walls too), therefore leaving the objects floating and easily clusterable. The issue with doing planar segmentation is that one can't control hom many times a model must be fit in an unsupervised manner. As it can be observed in figures \ref{fig:euclidean_cluster_pre0planes}, \ref{fig:euclidean_cluster_pre2planes} and \ref{fig:euclidean_cluster_pre3planes}, it is entirely dependent on the viewpoint\footnote{And the inherent randomness of RANSAC.} from which the cloud is taken where the plane will be fit. Furthermore, the plane segmentation may remove points that are actually of interest, as it can be observed in figure \ref{fig:euclidean_cluster_pre4planes}. Constraining the plane for which segmentation is performed to be parallel to the floor is not an option, since that would not work for all camera viewpoints, and contradicts one of the thesis' assumptions.
+
+Note: all test have been performed with a distance threshold $d_{T}=0.02$ meters.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/euclidean_cluster_pre0planes.png}
+    \caption{As mentioned, a successful Euclidean cluster segmentation is very dependent on previous processing and removal of the points connecting the different objects of interest. In this figure said preprocessing (like removing the points that belong to the table with a RANSAC planar segmentation) hasn't been applied, and hence the entire table, the objects that lay on it and even the left wall are considered as one same cluster.}
+    \label{fig:euclidean_cluster_pre0planes}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/euclidean_cluster_pre2planes.png}
+    \caption{In this figure a preprocessing with RANSAC segmentation with 2 planes has been performed. As it can be observed, the table where objects lay hasn't been removed, only the back and left walls have. Hence, the same problem as in \ref{fig:euclidean_cluster_pre0planes} remain: the table connects the objects and hence they can't be separated.}
+    \label{fig:euclidean_cluster_pre2planes}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/euclidean_cluster_pre3planes.png}
+    \caption{Preprocessing the cloud with 3 planes now also removes the table as well as the walls. Hence, the points belonging to the objects are left `floating' and can be put into different clusters.}
+    \label{fig:euclidean_cluster_pre3planes}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/euclidean_cluster_pre4planes.png}
+    \caption{Preprocessing the cloud with 4 planes segmentation. As it can be observed, segmenting with the fourth plane deletes the front of most of the objects of interest. Indeed, one can't rely on a specific number of planes to segment the cloud, since every case may vary.}
+    \label{fig:euclidean_cluster_pre4planes}
+\end{figure}
+
 
 \subsection{Region Growing segmentation} \label{sec:regiongrowing_segmentation}
+The aim of this section is to define theoretically and present practically the Region Growing segmentation algorithm. This algorithm, implemented in PCL, clusters points that maintain a certain level of smoothness on their surface. It is of special importance for this work, since all objects have smooth surfaces, as well as the background and the table of the testbench. This segmentation method will certainly not allow to classify the elements, but will at least give a way to separate them for further processing, like the one that will be presented in section \ref{sec:2D_3D_approaches}.
 
-% Local descriptors
-\subsection{Local descriptor matching: the SHOT descriptor}
+\subsubsection{Theoretical background}
+The first thing to do is to compute the curvature for all points, and sort them from lowest to highest. The curvature is estimated by a relationship between the eigenvalues of the covariance matrix for the points in a neighborhood, as
+\begin{equation}
+    \sigma=\frac{\lambda_{0}}{\lambda_{0}+\lambda_{1}+\lambda_{2}}
+\end{equation}
+Where $\lambda_{0}, \lambda_{1}, \lambda_{2}$ are the 3 eigenvalues from largest to lowest. The first point of the sort, the one with lowest curvature, is picked and added to a set called seeds. For every point in the seeds set a neighborhood of points (a predefined number of them) is found. For every point in said neighborhood the angle between their normal and the normal of the current seed point is computed. If it is below a certain user-defined threshold $\theta_{T}$ then the point is considered to belong to the current region. As well as the angle between normals, the curvature for every neighbor point is computed and compared to a curvature threshold $c_{T}$. If it is below the threshold, then that point is added to the set of seeds. After this, the initial seed from which all this procedure sprung is removed from the set of seeds. This procedure is repeated so long the seeds set is not empty. When the seeds set is empty then the region has fully grown, meaning that all points inside it maintain a certain surface smoothness (how smooth it needs to be is tweaked by the user with $\theta_{T}$ and $c_{T}$). Once the region is fully grown the following point in the sort is picked, until all are exhausted. This same procedure is detailed step by step in \ref{lst:region_growing}.
 
-\subsection{Correspondence Grouping}
+\begin{algorithm}[h]
+    \SetAlgoLined
+    Set: $\theta_{T}$ and $c_{T}$\\
+    Define: $\{P\}$ // set of points in the cloud \\
+    Define: $\{N\}$ // set of normals for every point in the cloud \\
+    Define: $\{c\}$ // set of curvatures for every point in the cloud \\
+    $\{A\}$ := $\{1, 2, ..., \mid P \mid \}$ // list of points available in $\{P\}$, ordered by curvature\\
+    $\{R\}$ := $\{\}$ // empty set of regions\\
+    \While{$A$ not empty}{
+        $\{R_{c}\}$ := $\{\}$ // current region, empty\\
+        $\{S_{c}\}$ := $\{\}$ // current seeds, empty\\
+        $P_{min}$ := $\min_{c} A$ // minimum curvature point\\
+        $\{S_{c}\}$ := $\{S_{c}\}$ + $P_{min}$ // add seed to seeds set\\
+        $\{S_{c}\}$ := $\{S_{c}\}$ + $P_{min}$ // add seed to region\\
+        $\{A\}$ := $\{A\}$ - $P_{min}$ // remove this point from $A$\\
+        \For(){$i$ in $\{S_{c}\}$}{
+            $\{B_{c}\}$ := get\_nearest\_neighbors($S_{c}\{i\}$)\\
+            \For(){$j$ in $\{B_{c}\}$}{
+                $P_{j}$ := get\_current\_neighbor($B_{c}\{j\}$)\\
+                \If{$P_{j}$ in $\{A\}$ and $\cos ^{-1}\left(\left|\left(N\left\{S_{c}\{i\}\right\}, N\left\{S_{c}\{j\}\right\}\right)\right|\right)<\theta_{T}$ }{
+                    $\{R_{c}\}$ := $\{R_{c}\}$ + $P_{j}$ // add point to region\\
+                    $\{A\}$ := $\{A\}$ - $P_{j}$ // delete point from the list of points available\\
+                }
+                \If{$c\{P_{j}\} < c_{T}$}{
+                    $\{S_{c}\}$ := $\{S_{c}\}$ + $P_{j}$ // add point to current seeds set\\
+                }
+            }
+        }
+        $\{R\}$ := $\{R\}$ + $\{R_{c}\}$
+    }
+    return $\{R\}$\\
+    \caption{The Region Growing algorithm}
+    \label{lst:region_growing}
+\end{algorithm}
+
+\subsubsection{Applied on the testbench}
+Several tests have been done to testbench point cloud data under different $\theta_{T}$ and $c_{T}$. The testbench's nature, being a table with rows of objects `rising' from a table make the threshold $c_{T}$ quite redundant, since it's $\theta_{T}$ the parameter that actually breaks regions. This has been empirically tested by vastly changing $c_{T}$ for a same $\theta_{T}$, which yields almost identical results. Tweaking $\theta_{T}$, however, will affect how strict the smoothness constraint and hence will yield very different results. See figures \ref{fig:region_growing_testbench_st2}, \ref{fig:region_growing_testbench_st4}, \ref{fig:region_growing_testbench_st5} and \ref{fig:region_growing_testbench_st10}. From the figures presented it can be observed that the ideal combination of parameters is $\theta_{T}=5\degree$ and $c_{T}=10\degree$, particularly because this classifies the cylinders of the cans as one same region, instead of two. Lowering $\theta_{T}$ will make smoothness more constrained, and hence result in many more regions. Dialing the threshold up too much will cluster distinct planes as one same cluster, as in \ref{fig:region_growing_testbench_st10}. 
+
+It has to be noted that clusters obtained by region growing are filtered by size. That is, clusters too small are automatically eliminated (they are the red colored ones in the figures). A test without that filter is presented in figure \ref{fig:region_growing_testbench_st2_nofil}. Tests have been performed with a number of neighbors of 30 and a preliminar RANSAC segmentation using 2 planes, hence the fact that none of the figures has the back and left walls.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/region_growing_testbench_st2.png}
+    \caption{Region Growing segmentation for $\theta_{T}=2\degree$ and $c_{T}=10\degree$. Being the threshold so low and having a minimum cluster size of 100, many clusters are eliminated. These appear in red.}
+    \label{fig:region_growing_testbench_st2}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/region_growing_testbench_st2_nofil.png}
+    \caption{Region Growing segmentation for $\theta_{T}=2\degree$ and $c_{T}=10\degree$. This image does not apply the minimum cluster size filter. Hence, since $\theta_{T}=2\degree$ is very small, any time there is a little change in smoothness it is considered a new region.}
+    \label{fig:region_growing_testbench_st2_nofil}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/region_growing_testbench_st4.png}
+    \caption{Region Growing segmentation for $\theta_{T}=4\degree$ and $c_{T}=10\degree$. As it can be observed, the cylinder of the cans is given two regions. To avoid this, $\theta_{T}=4\degree$ is further lowered.}
+    \label{fig:region_growing_testbench_st4}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/region_growing_testbench_st5.png}
+    \caption{Region Growing segmentation for $\theta_{T}=5\degree$ and $c_{T}=10\degree$. This is the best combination of parameters, since almost all objects present are given individual clusters.}
+    \label{fig:region_growing_testbench_st5}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/region_growing_testbench_st10.png}
+    \caption{Region Growing segmentation for $\theta_{T}=10\degree$ and $c_{T}=10\degree$. As it can be observed, relaxing too much $\theta_{T}=10\degree$ will consider almost everything as one same region.}
+    \label{fig:region_growing_testbench_st10}
+\end{figure}
+
 
 
 

@@ -5,10 +5,15 @@
 \begin{document}
 
 
-\section{Conclusions and Future Work}
+\section{Conclusions}
 
+The aim of this thesis, as well as the detection of objects in the testbench (which has been achieved with SIFT and partially with Template Matching), is to deploy the most prominent methods and algorithms in the literature and compare how they fare. Not only that, but also tackle one of the main bottlenecks for computer vision practitioners: producing quality labeled datasets. In that aspect, the objective of completeness has brought me to create a full-fledged GUI able to produce labels for all types of object recognition tasks (detection, segmentation or even classification when there's only one instance of the class), not just the one at hand. In addition to labeling, the GUI has a very useful image resizing functionality that doesn't distort the aspect ratio of contents in the image.
 
-Conclusions go here.
+From the results it could be gathered what approaches work best and at what cost, and under what circumstances they do. For instance, despite being stiff to orientation changes (which can be alleviated by creating a database of several orientation per object), SIFT has been demonstrated as the best all around option: it does not require the user to create an expensive training dataset, and works even when severely cluttered. The only drawback being that it can only detect single instances of an object. Template Matching, for when the object is uncluttered, has also been surprisingly useful given its simplicity. Having done a research `from the ground up' has proven that these non-learning methods may work good enough, thus allowing one to avoid other more complicated approaches (both in their complexity and the time they take to create a meaningful dataset) like CNNs.
 
+The 3D approach, however, has proven to be unsuccessful at detecting objects. It does, however, provide 2 things: first, a way to register several clouds into one, hence having a more complete and detailed knowledge of the elements in the testbench; and second, it has provided quite a number of techniques to break the cloud down into more manageable pieces. Those pieces, clusters rather, have been projected back to a 2D image and performed inference on them with the 2D methods mentioned earlier. Due mainly to artifacts in the projection and low resolution, however, no results have been achieved. The only method from which some good matchings have been obtained from the projection is SIFT, and still not good enough to call it a successful classifcation. As a conclusion, I would say that it is worth spending the time in 2D object detection, and only resorting to 3D if distances or an occupancy grip (for path planning for instance) are needed.
+
+\section{Future Work}
+There are two main aspects of this project that would require future work: (1) more time should be devoted to create a dataset of the objects in the testbench under different poses and clutter, and retrain the CNN. It would be good to discover if the CNN can handle the artifacts more successfully than the other methods. (2) Modify SIFT's code to handle several instance of one same object. There are many ways to do it. A very simple one would be to compute SIFT in a loop, placing a black patch for every detection and repeating, until no more instances are found. Besides this, every object should have more photos taken from the 360 degrees
 
 \end{document}

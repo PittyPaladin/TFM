@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 	# query image
-	img = cv2.imread("../img/cocacola_database.png")
+	img = cv2.imread("../img/cocacola_model.jpeg")
 	imGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 	# scene image
-	scene = cv2.imread("../img/cocacola0_pack.jpg")
+	scene = cv2.imread("../img/hidden_cocacola0.jpeg")
 	scGray = cv2.cvtColor(scene, cv2.COLOR_BGR2GRAY)
 
 	# find the keypoints and descriptors with SIFT
@@ -67,4 +67,6 @@ if __name__ == "__main__":
 	matchesDrawn = cv2.drawMatches(imGray, imKp, scGray, scKp, goodMatches, None, **draw_params)
 	
 	plt.imshow(matchesDrawn)
+	plt.axis('off')
 	plt.show()
+	# plt.savefig("../../report/images/" + "sift_hidden_pepsi.png")

@@ -6,7 +6,7 @@
 
 
 \section{2D approach to object detection} \label{sec:2D_approach}
-This section is devoted to a suite of computer vision algorithms that are leveraged to tackle the object recognition task. The array of algorithms tested is as wide as possible, covering both old and new algorithms from the literature.
+This section is devoted to 2 main conceptual aspects: first, the creation of a full fledged Graphical User Interface to curate image datasets; and second a suite of computer vision algorithms that are leveraged to tackle the object recognition task. For the second, the array of algorithms tested is as wide as possible, covering both old and new algorithms from the literature. First, Template Matching is tested as the simplest method possible, and then the difficulty level is raised by computing descriptors on images and classifying them to known database descriptors. After this, the all famous detection method SIFT is applied to great success, and finally, yet again rising the difficulty bar, a Convolutional Neural Network is built and trained.
 
 
 \subsection{Dataset creation and tooling using a Graphical User Interface} \label{sec:GUI}
@@ -85,6 +85,8 @@ As the reader might have noted last paragraphs mention the using of COCO-styled 
 \subsection{The circle Hough Transform}
 This section is devoted to the use of an old yet effective method in computer vision literature called the Hough transform, first introduced as a patent in 1962 by Paul Hough \cite{hough1962patent}, and popularized in \cite{ballard1981generalizing_Hough}. This technique, as it will be explained in this section, is used to detect simple shapes of binarized images, where noise and artifacts coming from the binarization may make that task non-trivial. It does so by clustering votes in the parameter space of the model that needs to be identified, be that a line (the model for which it was first designed), circle, ellipse, or any other shape. In this section its powerfulness to detect circular shapes is used, particularly for the Coca-Cola and Pepsi cans, since they present circular-like shapes when seen from the top.
 
+Note: indeed, the first assumption is that the camera's position is unknown, and the Hough circle detection relies on the fact that images have been taken from the top of the testbench. This does break the first assumption, but an exception is made, since it is a very plausible configuration one could apply to real world supermarkets. 
+
 \subsubsection{Theoretical background}
 This subsection is devoted to the study of the Hough transform applied to the detection of straight lines, and then moves onto circles.
 
@@ -134,12 +136,29 @@ When the radius $R$ is not known, however, the same procedure explained before n
 \end{figure}
 
 \subsubsection{Applying the Hough transform to testbench images from the top}
+Using OpenCV's implementation it is straightforward to run a Circle Hough transform. One can limit the pixels of radii of the circles by giving both a minimum and a maximum, and a minimum distance between radii centers. This latter parameter is quite important, since concentric circles may occur on one same can from the edge detection and binarization of the image. There is no one way to tell what the minimum distance between circle center should be, since that will depend on the density of cans in the testbench and their distance to the camera, so for this case a minimum distance of image height divided by 50 is taken. As it can be observed in figure \ref{fig:hough_circles_testbench}, circle detection works perfectly.
 
-\subsection{Template matching}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/hough_circles_testbench.png}
+    \caption{The circle detection (circles in red) works very well for all types of cans, despite not being able to tell which one is Pepsi and which one is Coca-Cola.}
+    \label{fig:hough_circles_testbench}
+\end{figure}
+
+\subsection{Template matching} \label{sec:template_matching}
+Template matching is a very common and easy object recognition technique in which a template image (also referred to as `database' image) is compared to a scene with the aim of finding a relation between them. The scene tends to be larger in size and may contain an object similar to the one in the template at an arbitrary location and scale. Before tackling the issue behind the fact that the object sought for may present different scales, let us first explain how to find the location of a template in an image. The template image is slid through the scene image as in a 2D convolution (see \ref{sec:theory_neural_networks} for a review on the convolution operation), yielding a map where each pixel position is a metric of how much does the neighborhood of the scene compare to the template. The are many comparison metrics, but the one chosen is presented in equation \ref{eq:TM_CCOEFF_NORMED}, where $I$ is the input image (the scene) and $T$ is the template image (the `database' image). The output map will have a shape of $\left(W-w+1, H-h+1\right)$, being $\left(W,H\right)$ the width and height of the input image and $\left(w,h\right)$ the size of the template image. The peak of said map will be the pixel having a maximum correspondence between template and scene.
+
+The standard procedure when using template matching is to not alter the database and scene images, besides some blurring or sharpening. This has proven to work quite bad when testing the detector on the testbench, so both images have been preprocessed with a Sobel \cite{Sobel_operator_history} edge detector. This has improved the results.
 
 \begin{equation} \label{eq:TM_CCOEFF_NORMED}
     R(x, y)=\frac{\sum_{x^{\prime}, y^{\prime}}\left(T^{\prime}\left(x^{\prime}, y^{\prime}\right) \cdot I^{\prime}\left(x+x^{\prime}, y+y^{\prime}\right)\right)}{\sqrt{\sum_{x^{\prime}, y^{\prime}} T^{\prime}\left(x^{\prime}, y^{\prime}\right)^{2} \cdot \sum_{x^{\prime}, y^{\prime}} I^{\prime}\left(x+x^{\prime}, y+y^{\prime}\right)^{2}}}
 \end{equation}
+
+\paragraph{The image pyramid}
+As mentioned, only convoluting the template to the scene will not account for scale changes of the object in the scene. In other words, if the object looks smaller or larger than the template does, then this method will not work. To alleviate this effect, an image pyramid is built. An image pyramid will resize the input image (the scene) into a set of sizes (levels) from large resolution to low resolution, while keeping the template intact. When doing so, optionally the input image may be sharpened. This way, when sliding the template over the different-sized inputs chances are that one of the levels will have the desired object at a scale that is similar to the one of the template. Which level of the pyramid to choose will be the one having the largest maximum peak. 
+
+This method has proven to be reliable for objects that are visible and have no clutter, and where database images are clear and simple, as it can be observed in figures \ref{fig:2pepsi_TM} and \ref{fig:5milk_testbench2_TM}. Figure \ref{fig:0pepsi_testbench_TM} is an example where the detector fails.
+
 
 \begin{figure}[htbp]
     \centering
@@ -162,10 +181,10 @@ When the radius $R$ is not known, however, the same procedure explained before n
     \label{fig:5milk_testbench2_TM}
 \end{figure}
 
-\subsection{Histogram of Oriented Gradients (HOG) feature descriptor}
-The Histogram of Oriented Gradients (HOG) was first introduced by Navneet Dalal and Bill Triggs in \cite{hog_paper} applied to the context of human detection. In their paper they describe it as a global descriptor similar to SIFT \cite{SIFTlowe2004} that, combined with a classifier (they use a Support Vector Machine), can recognize humans in scenes\footnote{Despite centering the paper in human recognition, the authors also mention that the method can work well in other recognition tasks.}. For this thesis, the HOG descriptor is used with an image pyramid and a sliding window over the input image, in combination with a Support Vector Machine and a \emph{k}-Nearest Neighbor classifier to discern between the class labels.
+\subsection{Histogram of Oriented Gradients (HOG) feature descriptor} \label{sec:HOG}
+The Histogram of Oriented Gradients (HOG) was first introduced by Navneet Dalal and Bill Triggs in \cite{hog_paper} applied to the context of human detection. In their paper they describe it as a global descriptor similar to SIFT \cite{SIFTlowe2004} that, combined with a classifier (they use a Support Vector Machine), can recognize humans in scenes\footnote{Despite centering the paper in human recognition, the authors also mention that the method can work well in other recognition tasks.}. For this thesis, the HOG descriptor is used with an image pyramid and a sliding window over the input image, in combination with a Support Vector Machine (specifically a Linear Support Vector Classifier) and a \emph{k}-Nearest Neighbor classifier to discern between the class labels.
 
-This section is hence divided in three parts: first, the theoretical background behind the Histogram of Oriented Gradients; second, the use of the HOG descriptor with an image pyramid and a sliding window; and third, using the HOG descriptor (which yields an n-dimensional vector) with the \emph{k}-NN and SVM clustering algorithms.
+This section is hence divided in four parts: first, the theoretical background behind the Histogram of Oriented Gradients; second, the use of the HOG descriptor with an image pyramid and a sliding window; third, the use of hard mining to increase the image training dataset; and fourth, using the HOG descriptor (which yields an n-dimensional vector) with the \emph{k}-NN and SVM clustering algorithms on the testbench.
 
 \subsubsection{Theoretical background}
 The Histogram of Gradients method is based on the evaluation of local histograms of image gradients and orientations on a grid over the input image, normalized to achieve contrast invariance. The HOG provides a compact and robust enough method to assemble local features (limbs or arms, for instance, in the case of humans) into a single high-dimensional feature vector that can be used with classifiers like \emph{k}-nearest neighbors or Support Vector Machines.
@@ -191,7 +210,18 @@ Up to this point, a histogram (essentially a feature vector) has been created fo
 
 The histogram of every block will have a length of $9 \: \text{bins/cell} * 4 \: \text{cells/block} = 36 \: \text{bins/block} $. Concatenating the histogram of all blocks will render a large feature vector, very high dimensional. This feature vector is the one used with the classification algorithm, be it a \emph{k}-NN or SVM.
 
+\subsubsection{HOG with an image pyramid and sliding window}
+The HOG, being only a descriptor computed from a patch, does not account for rotational and scale invariance. The former is tackled by training the algorithm with a database of different poses of one same class, and the latter is tackled with an image pyramid. And, of course, a sliding window computing HOG descriptors for all locations in the input image. The image pyramid has been already explained in \ref{sec:template_matching}, and the sliding window has no hidden secret: similarly to the 2D convolution, the HOG function is slid from left to right, top to bottom. When sliding the step is half of the width horizontally and half of the height vertically. This indeed means that there will be overlapping, which is something actually desired. Diving the image in cells and computing a HOG for every cell would yield erroneous results for objects in between them, so overlapping alleviates that at the expense of a bit larger computational burden.
+
+Obviously, the learning methods \emph{k}-NN the Linear Support Vector Classifier require training data to perform inference. The training data has been gathered from images of the objects, and some come from Google Images to add variety\footnote{One might think that a Pepsi can or Milk brick may not have much room for variety, but some cans are more slender and some logos vary a little (like the sugar free versions), specially if they date a few years back.}. 
+
+\subsubsection{Negative hard mining}
+In addition to this when performing inference on the testbench (or similar scenes also taken from Google Images) the missclassifications have been stored and inserted into the training dataset of images\footnote{Specifically for the class `None', which is neither Coca-Cola, Pepsi, Milk nor detergent, and is the one with more room for variation.}. This is done in an automatic manner, since the images in which inference is done have also been labeled with the GUI described in \ref{sec:GUI}. Hence, when a patch is classified as something when it actually isn't anything it is sent to the training dataset for class `none' straight away. 
+
+The way to assess if a patch is properly classified is done by computing the Intersection over Union (IoU) of the patch and the bounding boxes of the labeled images. The IoU is defined as the area of overlap of the bounding boxes divided by their area of union, which yield a ration. For this project ratios below 0.5 are considered missclassifications.
+
 \subsubsection{HOG applied to the testbench}
+Despite working for simple validation sets\footnote{Of the to object to identify isolated in a white background.}, none of the classes could be identified with an SVM or \emph{k}-NN. No reason is found for this to happen, other than the problem is much too n-dimensional, specially for the relatively small training set that could be collected. 
 
 \subsection{Scale Invariant Feature Transform (SIFT)}
 The Scale Invariant Feature Transform (SIFT) \cite{SIFTlowe2004} algorithm is one of the most influential citations\footnote{62628 citations in Google Scholar at the time of this writing.} in the computer vision literature, particularly in the set of non-learning algorithms. This algorithm, invented and patented by David Lowe in 2004, is still today one of the go-to tools to achieve detection of non-variant rigid form objects. This section will, on the one hand, provide a brief theoretical background of the algorithm (rather than a comprehensive explanation, which wouldn't make sense since the original paper is very clear) and then presents the results of applying it to the testbench.
@@ -293,12 +323,48 @@ Matching keypoint candidates are those with the nearest neighbor in the database
 
 After matchings are done, they need to be clustered. Some matchings will be incorrect, sure, but they can be filtered by considering their pose with respect to the others, and discard them if they differ too much from the consensus. \cite{SIFTlowe2004} uses the Hough transform in the pose space as the clustering technique since it is very robust to outliers (unlike RANSAC, which underperforms when outliers are above 50\%).
 
+\subsubsection{SIFT applied to the testbench}
+The SIFT algorithm in its vanilla version is intended to detect single instances of objects in a scene. This limitation could be tweaked by splitting the image in overlapping regions and individually assess the results of each region. Still, this improvement hasn't been performed, and all test have been done with only one item (the one to be detected) in the testbench at a time. Tests give good results for all objects (see figures \ref{fig:sift_hidden_pepsi}, \ref{fig:sift_hidden_cocacola}, \ref{fig:sift_hidden_milk_ok} and \ref{fig:sift_hidden_detergent}), but fail where the object in the testbench is rotated too much from the orientation in the database, as in figure \ref{fig:sift_hidden_milk}. The object having the most keypoint matches is the detergent, and understandably so, since it is the one that has the most texture information. Note: a minimum of 10 pose coherent keypoint matches are required to consider the object as `detected'.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/sift_hidden_pepsi.png}
+    \caption{Pepsi can found in between the other cans.}
+    \label{fig:sift_hidden_pepsi}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/sift_hidden_cocacola.png}
+    \caption{Coca-Cola can found in between the other cans. The Coca-Cola can has been found to be the one most affected by slight rotations. This same image having the can rotated 30 degrees wouldn't work.}
+    \label{fig:sift_hidden_cocacola}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/sift_hidden_milk.png}
+    \caption{From all the matches, one is incorrect. Hence, despite the system thinking that the milk brick has been detected, it hasn't been.}
+    \label{fig:sift_hidden_milk}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/sift_hidden_milk_ok.png}
+    \caption{Uncovering the milk brick and aiming at the object from an angle similar to the one from the database yields better results.}
+    \label{fig:sift_hidden_milk_ok}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/sift_hidden_detergent.png}
+    \caption{The detergent's label has lots of texture information, and many keypoints have been created there. Hence, as soon as a bit of said labels is observable in the scene, an object detection is guaranteed. }
+    \label{fig:sift_hidden_detergent}
+\end{figure}
 
 
 \subsection{Convolutional Neural Networks} \label{sec:world_neural_networks}
 
-\subsubsection{Theoretical background}
+\subsubsection{Theoretical background} \label{sec:theory_neural_networks}
 % \subsection{The Convolutional Neural Network}
 Arguably, Convolutional Neural Networks are one of the architectures inside the world of Artificial Intelligence that are most inspired by neuroscience. 
 As stated by \cite{deep_learning_IGoodfellow} and \cite{hands_on_ML_Aurelien}, the history of convolutional networks begins with the collaborative research of neurophysiologists David H. Hubel and Torsten Wiesel. They widened the knowledge on the structure of the visual cortex experimenting with animals, showing that neurons in the visual cortex have a small \textit{local receptive field} that strongly reacts to imagery inside its corresponding region of the visual field of the animal. They also discovered that receptive fields of neurons overlap and construct layers, where the lower-level ones react to simple patterns (like lines with different orientations) and the ones connected on top of them react to more increasingly complex patterns. These studies culminated in what today are called Convolutional Neural Networks, which belong to the family of Deep Learning methods.
@@ -492,7 +558,28 @@ As with convolutional layers, the user needs to define a kernel size, stride, an
 \end{figure}
 
 \subsubsection{Transfer learning}
+Transfer Learning is the technique by which the knowledge learnt from Machine and Deep Learning systems to solve a problem is stored with the purpose of reusing it for another. For instance, learning to recognize brands of milk, water, tomato sauce and the such may be reused to classify the objects of this thesis. Most DL frameworks include tools to tackle this feature (which may be quite tricky if the system at hand is complex), and TensorFlow is no exception. So much so that the API provides functions to download said knowledge learnt by other systems, freeing the user of doing any training. This knowledge comes from models trained on popular datasets, like Imagenet \cite{imagenet_paper}, CIFAR-10 \cite{Krizhevsky2009LearningML}, MNIST \cite{lecun2010mnist}, etc and is uploaded to the cloud for any user to use. Being able to reuse this knowledge does not imply that there shall not be a training by its own right, but reduces time in doing it by providing a good star, and that is specially important when dealing with the inherent `black-boxyness' of neural networks. Hence, despite using transfer learning, a custom dataset needs to be created and trained on top of the learning that has been transferred. As mentioned in section \ref{sec:HOG} the custom dataset of images with which to train is very small, so before training with it a research on groceries-related open datasets has been done. Being able to train the system on one of these and making use of that knowledge to retrain on the small custom dataset of testbench objects can yield good results. Below is detailed the open datasets most similar to the testbench:
 
+\begin{enumerate}
+    \item SOIL-47 \cite{Koubaroulis2002EvaluatingCO}: a dataset published in 2002 that focuses on testing color-based object recognition algorithms. It has images from different viewpoints and lighting conditions, although the classes used are a bit different from the ones of this thesis.
+    \item Grozi-120 \cite{grozi120}: a groceries dataset with 120 product classes combining both images form the web and collected in situ, totaling a number of 11870 images.
+    \item Grocery Products Dataset \cite{Grocery_Products_ETH}: contains 80 grocery products and has 8350 training images from the web and 680 test images taken from real shelves.
+    \item MVTec D2S \cite{follmann2018mvtec}: dataset designed with semantic segmentation in mind. Has 21000 images from 60 different classes mostly in uncluttered environments.
+    \item Freiburg Groceries Dataset \cite{freiburg_dataset}: contains 5021 images of 25 grocery classes from stores in Germany. The training set has images of isolated grocery items and the test set has cluttered scenes of different scenes.
+\end{enumerate}
 
+For this thesis the dataset used to try further improve training is the Freiburg Groceries dataset. Some example images are presented in figure \ref{fig:freiburg_ds_snippet}. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/freiburg_ds_snippet.png}
+    \caption{The Freiburg Groceries dataset. Image extracted from \cite{freiburg_dataset}.}
+    \label{fig:freiburg_ds_snippet}
+\end{figure}
+
+\subsubsection{Applied to the testbench}
+There are many image classification architectures that can be applied for a problem of this type. In general, CNNs are developed with a computational budget and then scaled up to try achieve better results if possible. To tackle this `upscaling' the authors in \cite{tan2020efficientnet} propose a family of 8 architectures, from simpler to more complex, in which to train Convolutional Neural Networks. They are called EfficientNets. The simplest one, implemented in this project, is the EfficientNet0. To make things even simpler, TensorFlow already implements the model and pretrained Imagenet weights for it, so it's a matter of training with the Freiburg Groceries dataset and then with this thesis' custom dataset (although changing the last softmax layer).
+
+Despite multiple training runs, no good results could be obtained from this learning method. The custom dataset is to small indeed, too much for image augmentation to be able to make a difference. No additional time is invested in making the dataset larger, since that would take up time from exploring other methods. Hence, results are left off as inconclusive. They will not be explored in section \ref{sec:2D_3D_approaches} either.
 
 \end{document}

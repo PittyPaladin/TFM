@@ -89,7 +89,7 @@ The Random Sample Consensus \cite{ransac_paper81} technique is a widely used met
         // select a random subset of points\\
         inliers := select\_inliers\_random()\\
         model\_params := fit\_inliers\_to\_model(inliers)\\
-        also\_inliers := [ ] // empty set\\
+        also\_inliers := \{ \} // empty set\\
         // see what of the remaining points in the data set are inliers\\
         \For(){points in data that not in inliers}{
             \If{Error(model\_params, point) $<$ t}{

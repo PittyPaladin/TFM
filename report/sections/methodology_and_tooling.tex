@@ -10,6 +10,7 @@ This section explains the high-level aspects regarding the self-imposed  methodo
 Below are listed the self-imposed requirements that drive the thesis:
 \begin{itemize}
     \item As mentioned in the introduction, both 2D images and (3D) point cloud data will be leveraged. Such a thing is done using one same depth camera, but there exists the possibility of using alternative cameras to obtain 2D images. There is no restriction on the specific technology behind the depth camera (more on \ref{sec:data_acquisition}) as long as it can produce point cloud data.
+    \item The set of objects that need to be detected are the following: \textbf{Pepsi can}, \textbf{Coca-Cola can}, \textbf{Milk brick} and \textbf{detergent}. They are all household items that can be found on supermarkets, with colorful and detailed textures and relatively simple 3D shapes.
     \item The aim is to detect objects in the testbench. The word \emph{detect} has a very concise meaning in computer vision jargon: detect means being able to locate and classify the object of interest in the scene. So, if the approach is 2D-only (as in section \ref{sec:2D_approach}) the aim is to locate the object with a bounding box with pixel coordinates, and if the approach is 3D-only (as in section \ref{sec:3D_approach}) the aim is to surround it with a 3-dimensional bounding box in the space. For combined methods (as in section \ref{sec:2D_3D_approaches}) the aim is the same as with the 3D-approach.
     \item ``Practicing" computer vision goes beyond applying a range of algorithms with the final goal of classifying/detecting/segmenting instances of things. It also includes a previous step of data collection, refinement and labelling. These aspects are to be included in this work.
     \item The input data are still images, and not streams of data (like video streams). Any algorithm used should not take more than a few seconds to compute, but no real-time requirements are set. The focus is not put into making production-ready code but rather a viable proof of concept.
@@ -28,7 +29,14 @@ The list of assumptions is presented below:
 \end{itemize}
 
 \subsection{The testbench} \label{sec:the_testbench}
-Explicar con texto qué testbench se va a usar, porqué se ha escogido ese, lo que motiva la disposición de los elementos y, sobretodo, fotos.
+The testbench is the place with the set of objects that need to be detected. It is a table with the objects on top, set in random order and somewhat cluttered, with a uniformly colored (white) background, similar to what can be found on supermarket shelves. An image of it is presented in figure \ref{fig:testbench_presentation}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{images/testbench_presentation.png}
+    \caption{The testbench.}
+    \label{fig:testbench_presentation}
+\end{figure}
 
 \subsection{Data acquisition} \label{sec:data_acquisition}
 This section is devoted to the analysis of technologies and camera devices suitable to obtain point cloud data. The objective is to give a clear understanding of the state of the art in 3D mappings technology, as well as provide a list of suitable contemporary devices that could deliver 3D mappings. Suitable in the sense that they could apply to this thesis, which means they either are within a reasonable price range, available for ordering, and within the range of distance at which the testbench will be used. Other considerations such as ``friendly" standard development kits (SDKs) and community use (which directly correlates to more information on the web) are also taken into account.
@@ -44,8 +52,6 @@ The most prominent technologies that generate depth images are the following:
     \item \textbf{Light Detection and Ranging} (LiDAR). LiDAR is actually based on the same technology as ToF, but has become so popular that has a name of its own. In its most popular configuration it is a fixed light emitter that reflects into a rotating mirror. The fact that the mirror rotates allows for precise stripe-like regions of points. It is used very widely for aerial imaging and autonomous driving.
 \end{itemize}
 
-% Decir primero que la cámara a usar será 3D porque así tienes nubes de puntos e imágenes 3D de una.
-% Hablar de los tipos de cámaras que hay y en qué tecnologías se basan. Presentar comparativa de todas ellas y decir cuál se escoje. Hablar del driver que usa para adquirir imágenes. Luego hablar de cómo se guardan los point clouds, su formato PCD, y porqué de dónde viene este formato. Lo mismo con los diferentes formatos de imagen (que sea breve).
 
 \subsubsection{Comercially available cameras}
 See below a list of some sensors available commercially. It was used to compare models and choose an appropriate one. The list is by no accounts a full nor exhaustive one. Its objective is to give the reader a grasp of what the market offers in the area of hand-held depth cameras and what are the main parameters that drive pricing. 
@@ -230,7 +236,7 @@ See below a list of some sensors available commercially. It was used to compare 
     \centering
     \includegraphics[width=0.4\textwidth]{images/astra_su3.png}
     \caption{Astra S U3 from Orbbec.}
-    \label{fig:astra_mini}
+    \label{fig:astra_su3}
 \end{figure}
 \begin{labeling}{\textbf{Field of View    }}
     \setlength{\itemindent}{2em}
@@ -564,7 +570,7 @@ This section is designed to introduce the languages and frameworks that will be 
 This work is based on a dual approach to the concept of computer vision\footnote{Taking the meaning of \emph{computer vision} in the broadest sense possible, that is, making machines sense the environment, irrespective of how the environment is recorded.}: 2D digital image processing (in the form of bitmaps) and 3D point cloud processing. Hence, it makes sense to assess the capabilities of the most important libraries that tackle those tasks.
 
 \paragraph{Most prominent 2D image processing libraries} 
-There are many image processing libraries. However, only the most notable ones are listed here. The newest machine/deep learning libraries, although used extensively for computer vision-related tasks, are not included in this list but rather given a dedicated chapter later on.
+There are many image processing libraries. However, only the most notable ones are listed here. The newest machine/deep learning libraries, although used extensively for computer vision-related tasks, are not included in this list but rather given a dedicated section later on.
 \begin{itemize}
     \item OpenCV: the Open Source Computer Vision library was started in 1999 by an Intel Research member called Gary Bradski, with the aim of making computer vision universally available. Its developing team has changed with time, but receives periodic improvements from the computer vision community. So much so that it incorporates some Deep Learning algorithms. OpenCV was built from the start with optimization and real-time applications in mind, making its algorithms as fast they can go. On top of that, it uses hardware acceleration\footnote{Like SIMD instruction sets.} when it can. Its interfaces are C++ (the language in which it is written), Python, Java and MATLAB, which is very useful when incorporating OpenCV into existing code bases not necessarily written in C++. The fact that the interface supports higher-level languages like Python (via Python bindings created using the Python/C API\footnote{\url{https://docs.python.org/3/c-api/index.html}}) makes writing programs fast and enhances productivity by being able to use widely popular packages like Numpy, Matplotlib, and others.
     
@@ -577,30 +583,30 @@ There are many image processing libraries. However, only the most notable ones a
 \end{itemize}
 
 \paragraph{3D point cloud processing libraries}
-There are fewer options regarding the processing of point clouds. OpenCV, although known for its 2D image processing capabilities, has some 3D processing features. But the go-to library is actually the Point Cloud Library (PCL) \cite{pcl_paper}, launched in 2011. Just like OpenCV, it is implemented in C++ with efficiency and speed in mind\footnote{SIMD instruction set for CPU computing and CUDA for GPU computing.}, and includes almost all the latest and greatest algorithms from the literature, either implemented by their own authors or others persons in the community. Despite its popularity, it does not provide an interface other than the C++ API in which it was coded.
+There are fewer options regarding the processing of point clouds. OpenCV, although known for its 2D image processing capabilities, has some 3D processing features. But the go-to library is actually the Point Cloud Library (PCL) \cite{pcl_paper}, launched in 2011. Just like OpenCV, it is implemented in C++ with efficiency and speed in mind\footnote{SIMD instruction set for CPU computing and CUDA for GPU computing.}, and includes almost all the latest and greatest algorithms from the literature, either implemented by their own authors or others persons in the community. Despite its popularity, it does not provide an interface other than the C++ in which it was coded. Python bindings do exist, but are unofficial and have been avoided.
 
-The framework of choice for the 2D approach (Section \ref{sec:2D_approach}) is OpenCV, used with the Python bindings. Combining the completeness and robustness of OpenCV with the boost in productivity Python itself as a language offers (compared to C++) and the array of packages that can be used alongside is key to this work. The framework of choice for the 3D approach (Section \ref{sec:3D_approach}) is PCL, again, for its completeness and robustness. Sadly, there are no official Python bindings, which means that all work will need to be carried out with its C++ API and no interaction with the Python interpreter is possible (unless I built custom bindings, which is not feasible due to time constraints). Code from the 3D approach should be self contained, and any interaction using Python would need to be done by firstly writing the data to disk and then reading it again from the other end (from the Python's end that is).
+The framework of choice for the 2D approach (Section \ref{sec:2D_approach}) is OpenCV, used with the Python bindings (except for section \ref{sec:using_realsense_sdk} where the C++ API is used). Combining the completeness and robustness of OpenCV with the boost in productivity Python itself as a language offers (compared to C++) and the array of packages that can be used alongside is key to this work. The framework of choice for the 3D approach (Section \ref{sec:3D_approach}) is PCL, again, for its completeness and robustness. Sadly, there are no official Python bindings, which means that all work will need to be carried out with its C++ API and no interaction with the Python interpreter is possible (unless I custom built those bindings, which is not feasible due to time constraints). Code from the 3D approach should be self contained, and any interaction using Python would need to be done by firstly writing the data to disk and then reading it again from the other end (from the Python's end that is).
 
 \paragraph{Deep learning frameworks}
-Section \ref{sec:world_neural_networks} of this work explores the use of Deep Learning for approaching the object detection issue. Hence, it is pertinent to provide a full comparison of the competitive deep learning frameworks available. It has to be noted that deep learning is a type of approach that works for both 2D images and 3D point cloud data.
+Section \ref{sec:world_neural_networks} of this work explores the use of Deep Learning for approaching the object detection task. Hence, it is pertinent to provide a full comparison of the competitive deep learning frameworks available. It has to be noted that deep learning is a type of approach that works for both 2D images and 3D point cloud data.
 
 \begin{itemize}
-    \item TensorFlow:
-    \item PyTorch:
-    \item MXnet:
+    \item TensorFlow: the TensorFlow \cite{tensorflow2015-whitepaper} library is an open source package distributed by Google Brain for Machine and Deep Learning with neural networks. Along with PyTorch it is the most mainstream DL software, and has many good documentation online, as well as application examples and webinars that try to reduce its steep learning curve.
+    \item PyTorch: developed by Facebook's Artificial Intelligence Research (FAIR) lab and open sourced in 2016 is the main contender to TensorFlow, and has been adopted by renowned companies like Tesla or comma.ai. PyTorch \cite{pytorch-whitepaper} is the main contender to TensorFlow for the market of open source libraries.
+    \item MXnet: developed by the Apache Software Foundation \cite{mxnet-whitepaper} and maintained by Amazon, Microsot and many others. It is less used than PyTorch and TensorFlow.
 \end{itemize}
 
+The library chosen for the Deep Learning (in section \ref{sec:world_neural_networks}) is TensorFlow, for two main reasons: it is a library with which I have had some experience before and it has more online documentation.
+
 \paragraph{Essential libraries} 
-Python is one of the most popular \cite{TODO:citeTIOBEindex} languages for two main reasons: first, the fact that it is a dynamic\footnote{Meaning it executes in runtime tasks that other languages would do in compile time.} high level language that allows for high productivity; and second because of its ecosystem. Ecosystem meaning the set of quality libraries that surround the language itself and make it ideal for a wide array of tasks. Those libraries are contributed freely by the community, and have become so ubiquitous that are almost considered \emph{de facto} standards, particularly in the scientific computing area. The ones used for this project are listed below:
+Python is a very popular language for two main reasons: first, the fact that it is a dynamic\footnote{Meaning it executes in runtime tasks that other languages would do in compile time.} high level language that allows for high productivity; and second because of its ecosystem. Ecosystem meaning the set of quality libraries that surround the language itself and make it ideal for a wide array of tasks. Those libraries are contributed freely by the community, and have become so ubiquitous that are almost considered \emph{de facto} standards, particularly in the scientific computing area. The ones used for this project are listed below:
 \begin{enumerate}
-    \item NumPy:
-    \item Matplotlib:
-    \item Numba: TODO:mencionar la sección exacta en la que se usa!
+    \item NumPy \cite{harris2020array}: standard library for numerical computing and n-dimensional array handling.
+    \item Matplotlib \cite{matplotlib_paper}: standard library to display and style data in the form of graphs or images.
+    \item Numba \cite{numba_paper}: just in time compiler for Python to transform compute intensive sections of the code into machine code, hence making it faster. Numba is only used for the implementation of \ref{sec:seam_carving}.
 \end{enumerate}
 
 And last but certainly not least, the Python Standard Library, which, as the name suggests, comes with the Python distribution. It offers a wide range of facilities to everyday hassles programmers may encounter, and does so in an OS-independent API manner. Such facilities include I/O functionality, networking, parsing, database management, email handling, and a long etcetera. Full list is provided in the official documentation\footnote{\url{https://docs.python.org/3/library/}}.
-
-% Y LUEGO DE LAS LIBRERÍAS ESENCIALES QUE VAN INCLUIDAS DE FACTO EN EL PROYECTO: NUMPY, MATPLOTLIB, Y EVIDENTEMENTE UN USO INTELIGENTE DE LA LIBRERIA ESTANDAR DE PYTHON
 
  
 \end{document}

@@ -12,9 +12,24 @@
 \usepackage{pgf}
 \usepackage{scrextend}
 \usepackage{amsmath}
+\usepackage{gensymb}
 \usepackage{float}
 \usepackage[ruled,vlined]{algorithm2e}
 \usepackage[toc,page]{appendix}
+\usepackage{transparent}
+\usepackage[firstpage]{draftwatermark}
+
+% Defining background image
+\usepackage{eso-pic}
+\newcommand\BackgroundPic{%
+\put(0,0){
+\parbox[b][\paperheight]{\paperwidth}{%
+\vfill
+\centering
+\includegraphics[width=0.8\linewidth,%
+keepaspectratio]{images/back_ground_image.png}%
+\vfill
+}}}
 
 % amsmath custom-defined operators
 \DeclareMathOperator*{\argmax}{argmax}
@@ -54,12 +69,12 @@
 
 %%% STATE OF THE ART %%%
 \subfile{sections/sota}
-\addcontentsline{toc}{section}{\numberline{}State of the art}
+% \addcontentsline{toc}{section}{\numberline{}State of the art}
 \cleardoublepage
 
 %%% ABSTRACT %%%
 \subfile{sections/abstract}
-\addcontentsline{toc}{section}{\numberline{}Abstract}
+% \addcontentsline{toc}{section}{\numberline{}Abstract}
 \cleardoublepage
 \pagenumbering{arabic}
 

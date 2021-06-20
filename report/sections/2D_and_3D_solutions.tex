@@ -6,7 +6,7 @@
 
 
 \section{Combining the 2D and 3D approaches} \label{sec:2D_3D_approaches}
-This section is devoted to the combination of some of the methods explained in sections \ref{sec:2D_approach} and \ref{sec:3D_approach}. The aim is to try achieve good detection results by leveraging the strengths of each approach in a modular manner. 
+This section is devoted to the combination of some of the methods explained in sections \ref{sec:2D_approach} and \ref{sec:3D_approach}. The aim is to try achieve good detection results by leveraging the strengths of each approach in a modular manner: a 3D approach to obtain a coarse but useful segmentation of interest zones, and a 2D approach to discern which zones are an actual object and to which class it belongs. To that effect, a pipeline of data established. 
 
 \subsection{The recognition pipeline}
 It is of specific importance the way in which the two approaches have been glued together. It has been done by dumping information into a `.json' dictionary, written to and read from when switching from the 2D approach to the 3D approach. All segmentation methods explained under section \ref{sec:3D_approach}, sections \ref{sec:sac_segmentation}, \ref{sec:euclidean_segmentation} and \ref{sec:regiongrowing_segmentation} to be specific, display in a visualization window their results on the input point cloud. With the visualization window opened, a key `s' callback is set. When pressed, the program computes bounding boxes for the clusters, and stores them in said `.json' file. Although simpler, its format has some similarities to the one used for the GUI explained in section \ref{sec:GUI}. It is detailed below:
@@ -41,6 +41,7 @@ As mentioned, upon pressing `s', the clusters created by the segmentation method
 
 Equation \ref{eq:project_IntelSDK} is used for the 3D bounding box's minimum corners $[x_{min}, y_{min}, z_{min}]$ and maximum corners $[x_{min} + height, y_{min} + width, z_{min} + depth]$ and returns the 2D bounding box positions. These are used to crop the image, and feeding each crop (after resizing that is) to a computer vision algorithm that will try to discern to which class does said crop belong to. Its decision is then inserted into the \texttt{category\_id} entry of the `.json' dictionary, indicating that all points inside its bounding box belong to that new class. This pipeline is visually presented in figure \ref{fig:2D_3D_pipeline}.
 
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/2D_3D_pipeline.png}
@@ -48,7 +49,10 @@ Equation \ref{eq:project_IntelSDK} is used for the 3D bounding box's minimum cor
     \label{fig:2D_3D_pipeline}
 \end{figure}
 
-For the tests, the algorithm chosen to segment the cloud is only region growing segmentation. It produces many clusters, most of them noise, but segments in coherent pieces the objects in the testbench. It is combined with minimum and maximum cluster points to alleviate the noise. This can be seen in figure \ref{fig:annotated_3Dbboxes_allUnknown}, where the clusters are drawn along with their enclosing bounding boxes. Since they are all marked as unknown, they appear in red. The computer vision algorithms used to disambiguate the clusters are a subset of the ones presented. The results are presented in the subsections below.
+
+For the tests, the algorithm chosen to segment the cloud is only region growing segmentation. It produces many clusters, most of them noise, but at least segments in coherent pieces the objects in the testbench. It is combined with minimum and maximum cluster points to alleviate the noise. This can be seen in figure \ref{fig:annotated_3Dbboxes_allUnknown}, where the clusters are drawn along with their enclosing bounding boxes. Since they are all marked as unknown, they appear in red. The computer vision algorithms used to disambiguate the clusters are a subset of the ones presented. The results are presented in the subsections below.
+
+Another reason for picking region growing over Euclidean cluster segmentation preprocessed with RANSAC plane segmentation, which yields cleaner results, is that the latter requires positional knowledge to properly work, and is unpredictable. Unpredictable in the sense that RANSAC plane segmentation may fit a plane to the table, true, but it could also peel off the front face of the objects in the front row, closest to the table's edge. And there's no way to tell in an unsupervised manner. This could be alleviated by constraining plane segmentation to certain angles wrt the camera, but then again this would require positional knowledge. Hence, despite not being so clean, region growing segmentation is preferred.
 
 \begin{figure}[H]
     \centering
@@ -89,7 +93,7 @@ As mentioned earlier, the 3D segmentation deemed to work best is region growing,
 \end{figure}
 
 \subsection{Region growing segmentation and HOG}
-Looking at the artifacts present in the RGB image one would suggest that the Histogram of Oriented Gradients is not going to work. And that is indeed the case. Neither the HOG trained with a \emph{k}-NN nor the one with an SVM recognize the crops. Understandably so, looking at the histograms generated from the crops, presented in figures \ref{fig:hog_milk_crop}, \ref{fig:hog_pepsi_crop}, \ref{fig:hog_cocacola_crop} and \ref{fig:hog_detergent_crop}.
+Looking at the artifacts present in the RGB image one would suggest that the Histogram of Oriented Gradients is not going to work. And that is indeed the case. Neither the HOG trained with a \emph{k}-NN nor the one with an SVM recognize the crops. Understandably so, looking at the histograms generated from the crops, presented in figures \ref{fig:hog_milk_crop}, \ref{fig:hog_pepsi_crop}, \ref{fig:hog_cocacola_crop} and \ref{fig:hog_detergent_crop}. This approach was bound to fail from the moment it couldn't even detect objects in clean testbench images. Still, looking at the way HOG behaves in front of the artifacts it can be confirmed that curating a larger dataset of images to train would be a futile effort.
 
 \begin{figure}[htbp]
     \centering
@@ -120,22 +124,22 @@ Looking at the artifacts present in the RGB image one would suggest that the His
 \end{figure}
 
 \subsection{Region growing segmentation and Template Matching}
+Artifacts and low resolution of the crop made Template Matching an unsuccessful 2D approach too. Results are self explanatory as presented in figures \ref{fig:0pepsiVSmilk_crop_TM} and \ref{fig:4pepsi_crop_TM}.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \resizebox{1\linewidth}{!}{\import{images/}{0pepsiVSmilk_crop_TM.pgf}}
     \caption{Note that the highest peak for the crop belonging to Milk using the Pepsi logo is 0.148. This almost the same value as the one of figure \ref{fig:4pepsi_crop_TM}, where the Pepsi logo is used for a true Pepsi crop. Hence, no classification criterion can be obtained from \texttt{maxVal}.}
     \label{fig:0pepsiVSmilk_crop_TM}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
     \resizebox{1\linewidth}{!}{\import{images/}{4pepsi_crop_TM.pgf}}
     \caption{The Pepsi logo applied to a crop belonging to a Pepsi can. The artifacts, the low resolution and the angle of the image yield an unconclusive peak value. In fact, said \texttt{maxVal} is very close to the one obtained by applying this same Pepsi logo to crops belonging to other classes (see \ref{fig:0pepsiVSmilk_crop_TM}).}
     \label{fig:4pepsi_crop_TM}
 \end{figure}
 
-\subsection{Region growing segmentation and a CNN}
 
 
 \end{document}
